@@ -1,10 +1,10 @@
 [package]
 name = "upcast-arithmetic"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 license = "MIT"
 description = "Arithmetic that is upcasted on overflow"
-repositiory = "https://github.com/umgefahren/upcast-arithmetic"
+repository = "https://github.com/umgefahren/upcast-arithmetic"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
