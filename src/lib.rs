@@ -20,25 +20,25 @@ macro_rules! checked_impl {
     ($t:ty) => {
         impl CheckedAdd for $t {
             fn checked_add(self, rhs: Self) -> Option<Self> {
-                <$t>::checked_add(self, rhs)
+                Self::checked_add(self, rhs)
             }
         }
 
         impl CheckedSub for $t {
             fn checked_sub(self, rhs: Self) -> Option<Self> {
-                <$t>::checked_sub(self, rhs)
+                Self::checked_sub(self, rhs)
             }
         }
 
         impl CheckedMul for $t {
             fn checked_mul(self, rhs: Self) -> Option<Self> {
-                <$t>::checked_mul(self, rhs)
+                Self::checked_mul(self, rhs)
             }
         }
 
         impl CheckedPow for $t {
             fn checked_pow(self, exp: u32) -> Option<Self> {
-                <$t>::checked_pow(self, exp)
+                Self::checked_pow(self, exp)
             }
         }
     };
@@ -54,6 +54,7 @@ checked_impl!(i32);
 checked_impl!(i64);
 
 pub trait Pow: Sized {
+    #[must_use]
     fn pow(self, exp: u32) -> Self;
 }
 
@@ -61,7 +62,7 @@ macro_rules! pow_impl {
     ($t:ty) => {
         impl Pow for $t {
             fn pow(self, exp: u32) -> Self {
-                <$t>::pow(self, exp)
+                Self::pow(self, exp)
             }
         }
     };
