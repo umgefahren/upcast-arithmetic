@@ -1,4 +1,8 @@
-use std::ops::{Add, Mul, Rem, Sub};
+//! Utility library for dealing with arithmetic on type limits by upcasting into bigger trait.
+
+#![no_std]
+
+use core::ops::{Add, Mul, Rem, Sub};
 
 pub trait CheckedAdd: Add + Sized {
     fn checked_add(self, rhs: Self) -> Option<Self>;
@@ -19,24 +23,28 @@ pub trait CheckedPow: Sized {
 macro_rules! checked_impl {
     ($t:ty) => {
         impl CheckedAdd for $t {
+            #[inline]
             fn checked_add(self, rhs: Self) -> Option<Self> {
                 Self::checked_add(self, rhs)
             }
         }
 
         impl CheckedSub for $t {
+            #[inline]
             fn checked_sub(self, rhs: Self) -> Option<Self> {
                 Self::checked_sub(self, rhs)
             }
         }
 
         impl CheckedMul for $t {
+            #[inline]
             fn checked_mul(self, rhs: Self) -> Option<Self> {
                 Self::checked_mul(self, rhs)
             }
         }
 
         impl CheckedPow for $t {
+            #[inline]
             fn checked_pow(self, exp: u32) -> Option<Self> {
                 Self::checked_pow(self, exp)
             }
@@ -61,6 +69,7 @@ pub trait Pow: Sized {
 macro_rules! pow_impl {
     ($t:ty) => {
         impl Pow for $t {
+            #[inline]
             fn pow(self, exp: u32) -> Self {
                 Self::pow(self, exp)
             }
@@ -91,10 +100,12 @@ macro_rules! upcast_impl {
         impl Upcast for $t {
             type Higher = $h;
 
+            #[inline]
             fn upcast(self) -> Self::Higher {
                 self.into()
             }
 
+            #[inline]
             fn downcast(inp: Self::Higher) -> Option<Self> {
                 inp.try_into().ok()
             }
@@ -114,7 +125,6 @@ upcast_impl!(i64, i128);
 pub trait One {
     const ONE: Self;
 }
-
 
 macro_rules! one_impl {
     ($t:ty) => {
@@ -138,12 +148,15 @@ one_impl!(i128);
 pub trait UpcastAdd<H: Add<Output = H> + Rem<Output = H>>:
     Upcast<Higher = H> + CheckedAdd + Copy
 {
+    #[must_use]
+    #[inline]
     fn upcast_add(self, rhs: Self) -> H {
         self.checked_add(rhs)
-            .map(|e| e.upcast())
-            .unwrap_or_else(|| self.upcast() + rhs.upcast())
+            .map_or_else(|| self.upcast() + rhs.upcast(), Upcast::upcast)
     }
 
+    #[must_use]
+    #[inline]
     fn upcast_add_mod(self, rhs: Self, modulo: Self) -> Self {
         Self::downcast(Self::upcast_add(self, rhs).rem(modulo.upcast())).unwrap()
     }
@@ -152,12 +165,15 @@ pub trait UpcastAdd<H: Add<Output = H> + Rem<Output = H>>:
 pub trait UpcastSub<H: Sub<Output = H> + Rem<Output = H>>:
     Upcast<Higher = H> + CheckedSub + Copy
 {
+    #[must_use]
+    #[inline]
     fn upcast_sub(self, rhs: Self) -> H {
         self.checked_sub(rhs)
-            .map(|e| e.upcast())
-            .unwrap_or_else(|| self.upcast() - rhs.upcast())
+            .map_or_else(|| self.upcast() - rhs.upcast(), Upcast::upcast)
     }
 
+    #[must_use]
+    #[inline]
     fn upcast_sub_mod(self, rhs: Self, modulo: Self) -> Self {
         Self::downcast(Self::upcast_sub(self, rhs).rem(modulo.upcast())).unwrap()
     }
@@ -166,12 +182,15 @@ pub trait UpcastSub<H: Sub<Output = H> + Rem<Output = H>>:
 pub trait UpcastMul<H: Mul<Output = H> + Rem<Output = H>>:
     Upcast<Higher = H> + CheckedMul + Copy
 {
+    #[must_use]
+    #[inline]
     fn upcast_mul(self, rhs: Self) -> H {
         self.checked_mul(rhs)
-            .map(|e| e.upcast())
-            .unwrap_or_else(|| self.upcast() * rhs.upcast())
+            .map_or_else(|| self.upcast() * rhs.upcast(), Upcast::upcast)
     }
 
+    #[must_use]
+    #[inline]
     fn upcast_mul_mod(self, rhs: Self, modulo: Self) -> Self {
         Self::downcast(Self::upcast_mul(self, rhs).rem(modulo.upcast())).unwrap()
     }
@@ -179,18 +198,20 @@ pub trait UpcastMul<H: Mul<Output = H> + Rem<Output = H>>:
 
 pub trait UpcastPow<H>: Upcast<Higher = H> + CheckedPow + Copy + Rem<Output = Self>
 where
-    H:  Pow + One + PartialOrd + Rem<Output = H> + Mul<Output = H> + Copy,
+    H: Pow + One + PartialOrd + Rem<Output = H> + Mul<Output = H> + Copy,
 {
+    #[must_use]
+    #[inline]
     fn upcast_pow(self, exp: u32) -> H {
         self.checked_pow(exp)
-            .map(|e| e.upcast())
-            .unwrap_or_else(|| self.upcast().pow(32))
+            .map_or_else(|| self.upcast().pow(32), Upcast::upcast)
     }
 
+    #[must_use]
+    #[inline]
     fn upcast_pow_mod(self, mut exp: u32, modulo: Self) -> Self {
-        self.checked_pow(exp)
-            .map(|e| e % modulo)
-            .unwrap_or_else(|| {
+        self.checked_pow(exp).map_or_else(
+            || {
                 let mut res: H = H::ONE;
                 let mut x_upcast = self.upcast();
 
@@ -199,13 +220,15 @@ where
                         res = res * x_upcast;
                     }
 
-                    exp = exp >> 1;
+                    exp >>= 1;
 
                     x_upcast = x_upcast * x_upcast;
                 }
 
                 Self::downcast(res % modulo.upcast()).unwrap()
-            })
+            },
+            |e| e % modulo,
+        )
     }
 }
 
