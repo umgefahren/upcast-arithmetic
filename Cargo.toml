@@ -1,6 +1,6 @@
 [package]
 name = "upcast-arithmetic"
-version = "0.0.2"
+version = "0.1.0"
 edition = "2021"
 license = "MIT"
 description = "Arithmetic that is upcasted on overflow"
@@ -9,3 +9,11 @@ keywords = ["mathematics", "numerics", "no-std"]
 categories = ["Algorithms", "Data structures", "Sience"]
 
 [dependencies]
+
+[dev-dependencies]
+criterion = "0.3"
+rand = "0.8"
+
+[[bench]]
+name = "basic"
+harness = false
