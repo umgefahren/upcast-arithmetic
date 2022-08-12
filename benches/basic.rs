@@ -57,17 +57,21 @@ fn criterion_benchmark(c: &mut Criterion) {
                 let _ = black_box((a + b) % modulo);
             })
         });
-        over_limit.bench_function("upcast u64 add", |b| b.iter(|| {
-            let a = rng.gen::<u64>();
-            let b = rng.gen::<u64>();
-            let _ = black_box(a.upcast_add(b));
-        }));
-        over_limit.bench_function("upcast u64 add mod", |b| b.iter(|| {
-            let a = rng.gen::<u64>();
-            let b = rng.gen::<u64>();
-            let modulo = rng.gen::<u64>();
-            let _ = black_box(a.upcast_add_mod(b, modulo));
-        }));
+        over_limit.bench_function("upcast u64 add", |b| {
+            b.iter(|| {
+                let a = rng.gen::<u64>();
+                let b = rng.gen::<u64>();
+                let _ = black_box(a.upcast_add(b));
+            })
+        });
+        over_limit.bench_function("upcast u64 add mod", |b| {
+            b.iter(|| {
+                let a = rng.gen::<u64>();
+                let b = rng.gen::<u64>();
+                let modulo = rng.gen::<u64>();
+                let _ = black_box(a.upcast_add_mod(b, modulo));
+            })
+        });
     }
 }
 

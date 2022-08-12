@@ -1,3 +1,8 @@
+//! [![Crates.io](https://img.shields.io/crates/v/upcast-arithmetic)](https://crates.io/crates/upcast-arithmetic)
+//! [![docs.rs](https://img.shields.io/docsrs/upcast-arithmetic)](https://docs.rs/upcast-arithmetic/latest/upcast_arithmetic/)
+//! [![GitHub license](https://img.shields.io/github/license/umgefahren/upcast-arithmetic)](https://github.com/umgefahren/upcast-arithmetic/blob/main/LICENSE)
+//! [![Rust](https://github.com/umgefahren/upcast-arithmetic/actions/workflows/rust.yml/badge.svg)](https://github.com/umgefahren/upcast-arithmetic/actions/workflows/rust.yml)
+//!
 //! Utility library for dealing with arithmetic on type limits by upcasting into types with higher
 //! limits.
 //!
