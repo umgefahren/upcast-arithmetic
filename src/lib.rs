@@ -8,7 +8,7 @@
 //!
 //! # Examples
 //!
-//! ##  Without `upcast_arithmetic`
+//! ##  Without `upcast_arithmetic` (panics)
 //! ```should_panic
 //! let a = u8::MAX;
 //! let b = 2u8;
@@ -31,7 +31,28 @@
 //! let res = a.upcast_add_mod(b, modulo);
 //! assert_eq!(res, 2);
 //! ```
+//!
+//! # Performance
+//! The performance overhead is very small. In benchmarks it seems like there is only a neglegible
+//! performance penelty, compared to assuming no overflow occurs.
+//!
+//! # `no_std`
+//! The crate is fully `#![no_std]` compatible.
+//!
+//! # Unsafe
+//! There is no unsafe code and the flag `#![deny(unsafe_code)]` is set.
 #![no_std]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+#![warn(clippy::unwrap_in_result)]
+#![warn(rustdoc::all)]
+#![deny(unsafe_code)]
+#![warn(missing_docs)]
+#![warn(clippy::dbg_macro)]
+#![warn(clippy::cargo)]
+#![warn(clippy::perf)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::all)]
+#![allow(rustdoc::missing_doc_code_examples)]
 
 use core::ops::{Add, Mul, MulAssign, Rem, Sub};
 
@@ -39,6 +60,17 @@ use core::ops::{Add, Mul, MulAssign, Rem, Sub};
 /// Performs checked addition. Maps directly to the integers checked_add method. (i.e.
 /// [`u8::checked_add`]) Consult the docs of the primitive methods to learn more.
 pub trait CheckedAdd: Add + Sized {
+    /// performs checked add
+    /// # Example
+    /// ```
+    /// # use upcast_arithmetic::CheckedAdd;
+    /// let a = 1u8;
+    /// let b = 2u8;
+    /// 
+    /// assert_eq!(CheckedAdd::checked_add(a, b), a.checked_add(b));
+    /// let b = u8::MAX;
+    /// assert_eq!(CheckedAdd::checked_add(a, b), a.checked_add(b));
+    /// ```
     fn checked_add(self, rhs: Self) -> Option<Self>;
 }
 
@@ -46,6 +78,15 @@ pub trait CheckedAdd: Add + Sized {
 /// Performs checked substraction. Maps directly to the integers checked_sub method. (i.e.
 /// [`u8::checked_sub`]) Consult the docs of the primitive methods to learn more.
 pub trait CheckedSub: Sub + Sized {
+    /// performs checked sub
+    /// # Example 
+    /// ```
+    /// # use upcast_arithmetic::CheckedSub;
+    /// let a = 2u8;
+    /// let b = 1u8;
+    ///
+    /// assert_eq!(CheckedSub::checked_sub(a, b), a.checked_sub(b));
+    /// assert_eq!(CheckedSub::checked_sub(b, a), b.checked_sub(a));
     fn checked_sub(self, rhs: Self) -> Option<Self>;
 }
 
@@ -53,6 +94,15 @@ pub trait CheckedSub: Sub + Sized {
 /// Performs checked multiplication. Maps directly to the integers checked_mul method. (i.e.
 /// [`u8::checked_mul`]) Consult the docs of the primitive methods to learn more.
 pub trait CheckedMul: Mul + Sized {
+    /// performs checked mul
+    /// # Example 
+    /// ```
+    /// # use upcast_arithmetic::CheckedMul;
+    /// let a = 2u8;
+    /// let b = 1u8;
+    ///
+    /// assert_eq!(CheckedMul::checked_mul(a, b), a.checked_mul(b));
+    /// assert_eq!(CheckedMul::checked_mul(a, u8::MAX), a.checked_mul(u8::MAX));
     fn checked_mul(self, rhs: Self) -> Option<Self>;
 }
 
@@ -60,6 +110,7 @@ pub trait CheckedMul: Mul + Sized {
 /// Performs checked power. Maps directly to the integers checked_pow method. (i.e.
 /// [`u8::checked_pow`]) Consult the docs of the primitive methods to learn more.
 pub trait CheckedPow: Sized {
+    /// performs checked pow
     fn checked_pow(self, exp: u32) -> Option<Self>;
 }
 
@@ -110,6 +161,7 @@ checked_impl!(i64);
 ///
 /// Panics if the calculation overflows.
 pub trait Pow: Sized {
+    /// performs power operation
     #[must_use]
     fn pow(self, exp: u32) -> Self;
 }
@@ -392,9 +444,13 @@ upcast_arith_impl!(i32, i64);
 upcast_arith_impl!(i64, i128);
 
 /// utilities for performing upcast arithmetic in `const`.
+#[cfg(any(feature = "const", doc))]
+#[cfg_attr(docsrs, doc(cfg(feature = "const")))]
+#[allow(rustdoc::missing_doc_code_examples)]
 pub mod constant {
     macro_rules! gen_upcast_arith {
-        ($t:ty, $h:ty, $i:ident, $o:ident, $m:ident, $e:tt) => {
+        ($t:ty, $h:ty, $i:ident, $o:ident, $m:ident, $e:tt, $d:meta, $mo:meta) => {
+            #[$d]
             #[must_use]
             pub const fn $i(lhs: $t, rhs: $t) -> $h {
                 match lhs.$m(rhs) {
@@ -403,6 +459,7 @@ pub mod constant {
                 }
             }
 
+            #[$mo]
             #[must_use]
             pub const fn $o(lhs: $t, rhs: $t, modulo: $t) -> $t {
                 match lhs.$m(rhs) {
@@ -414,19 +471,18 @@ pub mod constant {
     }
     macro_rules! gen_upcast_add_impl {
         ($t:ty, $h:ty, $i:ident, $o:ident) => {
-            gen_upcast_arith!($t, $h, $i, $o, checked_add, +);
-
+            gen_upcast_arith!($t, $h, $i, $o, checked_add, +, doc = "const equivalent of [`UpcastAdd::upcast_add`](crate::UpcastAdd::upcast_add).", doc = "const equivalent of [`UpcastAdd::upcast_add_mod`](crate::UpcastAdd::upcast_add_mod).");
         };
     }
     macro_rules! gen_upcast_sub_impl {
         ($t:ty, $h:ty, $i:ident, $o:ident) => {
-            gen_upcast_arith!($t, $h, $i, $o, checked_sub, -);
+            gen_upcast_arith!($t, $h, $i, $o, checked_sub, -, doc = "const equivalent of [`UpcastSub::upcast_sub`](crate::UpcastSub::upcast_sub).", doc = "const equivalent of [`UpcastSub::upcast_sub_mod`](crate::UpcastSub::upcast_sub_mod).");
         };
     }
 
     macro_rules! gen_upcast_mul_impl {
         ($t:ty, $h:ty, $i:ident, $o:ident) => {
-            gen_upcast_arith!($t, $h, $i, $o, checked_mul, *);
+            gen_upcast_arith!($t, $h, $i, $o, checked_mul, *, doc = "const equivalent of [`UpcastMul::upcast_mul`](crate::UpcastMul::upcast_mul).", doc = "const equivalent of [`UpcastMul::upcast_mul_mod`](crate::UpcastMul::upcast_mul_mod).");
         };
     }
 

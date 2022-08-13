@@ -1,6 +1,6 @@
 [package]
 name = "upcast-arithmetic"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
 description = "Arithmetic that is upcasted on overflow"
@@ -11,9 +11,22 @@ categories = ["Algorithms", "Data structures", "Sience"]
 [dependencies]
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = { version = "0.3", features = ["html_reports"] }
 rand = "0.8"
+
+[profile.release]
+lto = true
 
 [[bench]]
 name = "basic"
 harness = false
+
+[features]
+default = ["const"]
+const = []
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+rustc-args = ["--cfg", "docsrs"]
+
