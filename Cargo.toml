@@ -6,7 +6,7 @@ license = "MIT"
 description = "Arithmetic that is upcasted on overflow"
 repository = "https://github.com/umgefahren/upcast-arithmetic"
 keywords = ["mathematics", "numerics", "no-std"]
-categories = ["Algorithms", "Data structures", "Sience"]
+categories = ["algorithms", "mathematics", "no-std"]
 
 [dependencies]
 
